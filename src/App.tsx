@@ -8,32 +8,67 @@ import { ResumeEditor } from './components/ResumeEditor';
 import { ResumePreview } from './components/ResumePreview';
 import { TemplateSelector } from './components/TemplateSelector';
 import { LoginPage } from './components/LoginPage';
+import { Dashboard } from './components/Dashboard';
+import { UpdateResumePage } from './components/UpdateResumePage';
 import { INITIAL_RESUME, ResumeData } from './types';
-import { Printer, FileText, Sparkles, LogOut } from 'lucide-react';
+import { Printer, FileText, Sparkles, LogOut, ArrowLeft } from 'lucide-react';
+
+type AppMode = 'dashboard' | 'create' | 'update';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mode, setMode] = useState<AppMode>('dashboard');
   const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_RESUME);
   const [template, setTemplate] = useState<'classic' | 'modern' | 'minimal'>('modern');
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   if (!isAuthenticated) {
     return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
   }
 
+  if (mode === 'dashboard') {
+    return (
+      <div className="relative">
+        {/* Sign out */}
+        <button
+          id="dashboard-signout-btn"
+          onClick={() => setIsAuthenticated(false)}
+          className="absolute top-4 right-4 z-50 flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-400 transition-colors"
+          title="Sign Out"
+        >
+          <LogOut size={14} /> Sign Out
+        </button>
+        <Dashboard onSelect={(m) => setMode(m)} />
+      </div>
+    );
+  }
+
+  if (mode === 'update') {
+    return <UpdateResumePage onBack={() => setMode('dashboard')} />;
+  }
+
+  // mode === 'create'
   return (
     <div className="min-h-screen bg-gray-100 font-sans text-gray-900 print:bg-white">
       {/* Navbar */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <button
+              id="create-back-to-dashboard"
+              onClick={() => setMode('dashboard')}
+              className="flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors text-sm font-medium mr-1"
+            >
+              <ArrowLeft size={15} /> Dashboard
+            </button>
+            <div className="h-5 w-px bg-gray-200" />
             <div className="bg-indigo-600 p-2 rounded-lg text-white">
               <FileText size={20} />
             </div>
-            <span className="font-bold text-xl tracking-tight">ResuMate<span className="text-indigo-600">AI</span></span>
+            <span className="font-bold text-xl tracking-tight">
+              ResuMate<span className="text-indigo-600">AI</span>
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -59,20 +94,17 @@ function App() {
 
           {/* Editor Column */}
           <div className="lg:col-span-5 space-y-6 print:hidden">
-
-            {/* Template Selector Section */}
             <TemplateSelector currentTemplate={template} onSelect={setTemplate} />
-
             <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-start gap-3">
               <Sparkles className="text-indigo-600 mt-1 shrink-0" size={18} />
               <div>
                 <h3 className="font-semibold text-indigo-900 text-sm">AI-Powered Assistant</h3>
                 <p className="text-indigo-700 text-xs mt-1">
-                  Use the "Generate" buttons inside the editor to auto-complete summaries, improve bullet points, and suggest skills based on your role.
+                  Use the "Generate" buttons inside the editor to auto-complete summaries,
+                  improve bullet points, and suggest skills based on your role.
                 </p>
               </div>
             </div>
-
             <ResumeEditor data={resumeData} onChange={setResumeData} />
           </div>
 
@@ -80,12 +112,10 @@ function App() {
           <div className="lg:col-span-7 print:w-full">
             <div className="sticky top-24 print:static">
               <div className="bg-white rounded-xl shadow-xl overflow-hidden print:shadow-none print:rounded-none print:overflow-visible">
-                {/* A4 Aspect Ratio Container - Reset for print */}
                 <div className="aspect-[1/1.4142] w-full overflow-y-auto print:aspect-auto print:overflow-visible print:h-auto">
                   <ResumePreview data={resumeData} template={template} />
                 </div>
               </div>
-
               <div className="mt-4 text-center text-gray-400 text-xs print:hidden">
                 Preview Mode • A4 Format
               </div>
@@ -95,19 +125,10 @@ function App() {
         </div>
       </main>
 
-      {/* Print Styles Override */}
       <style>{`
         @media print {
-          @page {
-            size: A4;
-            margin: 0;
-          }
-          body {
-            background: white !important;
-            margin: 0;
-            padding: 0;
-          }
-          /* Hide browser headers/footers by giving the content its own margins */
+          @page { size: A4; margin: 0; }
+          body { background: white !important; margin: 0; padding: 0; }
           #resume-preview {
             margin: 0 !important;
             padding: 15mm !important;
